@@ -1,448 +1,378 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Upload, Download, FileCheck, Database, RefreshCw, AlertCircle, ChevronRight, ExternalLink, X, AlertTriangle
+  Star, 
+  CheckCircle, 
+  Zap, 
+  Clock, 
+  ShieldCheck, 
+  Droplets, 
+  Leaf, 
+  Dna, 
+  ShoppingBag, 
+  Phone, 
+  MapPin, 
+  Mail,
+  Menu,
+  X,
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 
-/**
- * PROJECT: Checker [ERP Customer]
- * VERSION: 2.3.2
- * UPDATES: 
- * - Fixed row.rowNumber background to bg-indigo-100
- * - isNew Customer CUST_CODE background to bg-yellow-100 + font-bold
- * - Strengthened row colors: bg-red-100, bg-slate-100, hover:bg-emerald-100
- */
+const COLORS = {
+  hectorGold: '#d4af37',
+  hectorPink: '#fff5f7',
+  brandPink: '#db2777'
+};
 
-const SUPABASE_URL = "https://etdnpahmxdeurxlcuwcu.supabase.co";
-const SUPABASE_KEY = "sb_publishable_vVs25rvLSgZXVkxw9WeT5w_xtaagYYG";
-
-const COLUMN_NAMES = [
-  "DATE", "CUST_CODE", "CUST_NAME", "CUST_NAME_FULL", "CUST_ADDRESS", 
-  "PHUONG_XA_NEW", "PHUONG_XA_OLD", "CUST_PHONE", "CHANNEL", "BIZ_TYPE", 
-  "CUST_GROUP", "SALEMAN", "TAX_CODE", "TAX_BUYER", "TAX_NAME", 
-  "TAX_ADDRESS", "EMAIL", "PAYM_TERM", "COMMENT", "BIZ_CODE", "CUST_GRPCODE",
-  "CODE_PHUONG", "CODE_CITY", "CODE_REGION"
-];
-
-const EXPORT_TEMPLATE_HEADERS = [
-  "CUST_CODE", "CUST_NAME", "CUST_NAME_FULL", "TAX_NAME", "FIX_Loaikh", 
-  "CUST_GRPCODE", "TAX_CODE", "FIX_Currency", "CHANNEL", "SALEMAN", 
-  "FIX_BGcha", "BIZ_CODE", "CUST_ADDRESS", "PAYM_TERM", "PAYM_METHOD", 
-  "TAX_ADDRESS", "FIX_Country", "CODE_CITY", "CODE_PHUONG", "CODE_REGION", 
-  "TAX_BUYER", "CUST_PHONE", "FIX_ext", "FIX_fax", "FIX_Mobile", 
-  "EMAIL", "FIX_Web", "Fix_Cmt", "FIX_A", "FIX_B", "FIX_CN"
-];
-
-const Checker10 = () => {
-  const [data, setData] = useState([]);
-  const [validChannels, setValidChannels] = useState([]);
-  const [custGroups, setCustGroups] = useState([]);
-  const [bizModels, setBizModels] = useState([]); 
-  const [addressPreviewCount, setAddressPreviewCount] = useState(0); 
-  const [fileName, setFileName] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [dbStatus, setDbStatus] = useState('connecting');
-  const [supabaseClient, setSupabaseClient] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+const App = () => {
+  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 });
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!window.XLSX && !document.getElementById('xlsx-sdk')) {
-      const xScript = document.createElement('script');
-      xScript.id = 'xlsx-sdk';
-      xScript.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-      document.body.appendChild(xScript);
-    }
+    const timer = setInterval(() => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setHours(24, 0, 0, 0);
+      const diff = tomorrow - now;
 
-    const initSupabase = () => {
-      if (window.supabase) {
-        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        setSupabaseClient(client);
-      } else {
-        const sScript = document.createElement('script');
-        sScript.id = 'supabase-sdk';
-        sScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-        sScript.onload = () => {
-          if (window.supabase) {
-            const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            setSupabaseClient(client);
-          }
-        };
-        document.body.appendChild(sScript);
-      }
-    };
-    initSupabase();
+      setTimeLeft({
+        h: Math.floor(diff / (1000 * 60 * 60)),
+        m: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        s: Math.floor((diff % (1000 * 60)) / 1000)
+      });
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    if (supabaseClient) fetchMasterData();
-  }, [supabaseClient]);
-
-  const fetchMasterData = async () => {
-    if (!supabaseClient) return;
-    setDbStatus('loading');
-    try {
-      const { data: channels } = await supabaseClient.from('ConfigChannel').select('chcode');
-      const { data: models } = await supabaseClient.from('ConfigModel').select('chanel_code, mdname, mdcode');
-      const { data: groups } = await supabaseClient.from('ConfigCustGroup').select('chanel_code, group_name, group_code');
-      const { count } = await supabaseClient.from('ConfigAddress').select('*', { count: 'exact', head: true });
-      
-      setValidChannels(channels?.map(c => c.chcode?.toString().toUpperCase() || "") || []);
-      setBizModels(models || []);
-      setCustGroups(groups || []);
-      setAddressPreviewCount(count || 0);
-      setDbStatus('online');
-    } catch (err) {
-      setDbStatus('error');
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    // Giả lập gửi email tới zydang2025@gmail.com
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsSubmitted(true);
+      console.log("Order submitted to: zydang2025@gmail.com");
+    }, 1500);
   };
-
-  const formatExcelDate = (val) => {
-    if (!val) return "";
-    if (typeof val === 'number' && val > 30000) {
-      const date = new Date((val - 25569) * 86400 * 1000);
-      if (!isNaN(date.getTime())) {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      }
-    }
-    if (typeof val === 'string' && val.trim() !== "") {
-        const date = new Date(val);
-        if (!isNaN(date.getTime())) {
-            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        }
-    }
-    return "";
-  };
-
-  const findAddressOnline = async (addressText) => {
-    if (!addressText || !supabaseClient) return null;
-    try {
-      const { data, error } = await supabaseClient
-        .from('ConfigAddress')
-        .select('code_phuong, code_city, code_region')
-        .ilike('address_short', addressText.trim())
-        .limit(1);
-      
-      if (error || !data || data.length === 0) return null;
-      return data[0];
-    } catch (e) {
-      return null;
-    }
-  };
-
-  const processRow = async (row, idx) => {
-    const cCode = row[1]?.toString().trim() || "";
-    const cName = row[2]?.toString().trim() || "";
-    const pXa = row[5]?.toString().trim() || "";
-    const tCode = row[12]?.toString().trim() || "";
-
-    // Dừng xử lý nếu 4 cột chính đều trống
-    if (!cCode && !cName && !pXa && !tCode) {
-      return "STOP_PROCESSING"; 
-    }
-
-    const content = COLUMN_NAMES.map((_, cIdx) => {
-      const cell = row[cIdx];
-      if (cIdx === 0) return formatExcelDate(cell);
-      let val = (cell === undefined || cell === null) ? "" : cell.toString().trim();
-      if (cIdx === 1 && (val === "" || val.toUpperCase() === "NEW")) return "NEW";
-      return val;
-    });
-
-    const validateErrors = new Set();
-    const databaseErrors = new Set();
-    const mappedIndices = new Set();
-
-    const CUST_CODE = content[1]?.toString().toUpperCase();
-    const PHUONG_XA_INPUT = content[5]?.toString().trim();
-    const CHANNEL = content[8]?.toString().toUpperCase(); 
-    const BIZ_TYPE = content[9]?.toString().toUpperCase();
-    const GROUP_NAME_INPUT = content[10]?.toString().toUpperCase();
-
-    if (!CHANNEL || CHANNEL === "") {
-      validateErrors.add(8);
-    } else if (!validChannels.includes(CHANNEL)) {
-      databaseErrors.add(8);
-    }
-
-    if (CHANNEL && BIZ_TYPE) {
-      const foundModel = bizModels.find(m => 
-        m.chanel_code?.toString().toUpperCase() === CHANNEL && 
-        m.mdname?.toString().toUpperCase() === BIZ_TYPE
-      );
-      if (foundModel) {
-        content[19] = foundModel.mdcode; 
-        mappedIndices.add(19);
-      } else {
-        databaseErrors.add(9);
-        databaseErrors.add(19); 
-        content[19] = "ERR_BIZ";
-      }
-    } else if (!BIZ_TYPE) validateErrors.add(9);
-
-    if (CHANNEL && GROUP_NAME_INPUT) {
-      const foundGroup = custGroups.find(g => 
-        g.chanel_code?.toString().toUpperCase() === CHANNEL && 
-        g.group_name?.toString().toUpperCase() === GROUP_NAME_INPUT
-      );
-      if (foundGroup) {
-        content[20] = foundGroup.group_code;
-        mappedIndices.add(20);
-      } else {
-        databaseErrors.add(10);
-        databaseErrors.add(20);
-        content[20] = "ERR_GRP";
-      }
-    } else if (!GROUP_NAME_INPUT) validateErrors.add(10);
-
-    if (PHUONG_XA_INPUT) {
-      const foundAddr = await findAddressOnline(PHUONG_XA_INPUT);
-      if (foundAddr) {
-        content[21] = foundAddr.code_phuong;
-        content[22] = foundAddr.code_city;
-        content[23] = foundAddr.code_region;
-        mappedIndices.add(21);
-        mappedIndices.add(22);
-        mappedIndices.add(23);
-      } else {
-        databaseErrors.add(5);
-        content[21] = "ERR_ADDR";
-        content[22] = "ERR_ADDR";
-        content[23] = "ERR_ADDR";
-      }
-    } else {
-      validateErrors.add(5);
-    }
-
-    const isNewCustomer = CUST_CODE === "NEW";
-    if (isNewCustomer) {
-      const requiredForNew = [2, 3, 4, 5, 6, 8, 9, 10, 14, 15];
-      requiredForNew.forEach(idx => {
-        if (!content[idx] || content[idx].toString().trim() === "") {
-          validateErrors.add(idx);
-        }
-      });
-    }
-
-    return { 
-      content, 
-      rowNumber: idx + 4, 
-      isError: validateErrors.size > 0 || databaseErrors.size > 0, 
-      isNewCustomer, 
-      validateErrors: Array.from(validateErrors), 
-      databaseErrors: Array.from(databaseErrors), 
-      mappedIndices: Array.from(mappedIndices) 
-    };
-  };
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file || !window.XLSX) return;
-    setFileName(file.name);
-    setIsProcessing(true);
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const bstr = evt.target.result;
-        const wb = window.XLSX.read(bstr, { type: 'binary' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rawJson = window.XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-        
-        if (rawJson.length >= 3) {
-          const rowsToProcess = rawJson.slice(3);
-          const results = [];
-          for (let i = 0; i < rowsToProcess.length; i++) {
-            const res = await processRow(rowsToProcess[i], i);
-            if (res === "STOP_PROCESSING") break; 
-            if (res !== null) results.push(res);
-          }
-          setData(results);
-        }
-      } catch (err) { 
-        console.error("Lỗi xử lý file:", err); 
-      } finally { 
-        setIsProcessing(false); 
-      }
-    };
-    reader.readAsBinaryString(file);
-  };
-
-  const executeExport = () => {
-    if (data.length === 0 || !window.XLSX) return;
-    setShowConfirmModal(false);
-
-    const exportRows = data.map(item => {
-      const raw = item.content;
-      return EXPORT_TEMPLATE_HEADERS.map(header => {
-        switch (header) {
-          case "CUST_CODE": return raw[1];
-          case "CUST_NAME": return raw[2];
-          case "CUST_NAME_FULL": return raw[3];
-          case "TAX_NAME": return raw[14];
-          case "FIX_Loaikh": return "1";
-          case "CUST_GRPCODE": return raw[20];
-          case "TAX_CODE": return raw[12];
-          case "FIX_Currency": return "VND";
-          case "CHANNEL": return raw[8];
-          case "SALEMAN": return raw[11];
-          case "BIZ_CODE": return raw[19];
-          case "CUST_ADDRESS": return raw[4];
-          case "PAYM_TERM": return "COD";
-          case "PAYM_METHOD": return "TM/CK";
-          case "TAX_ADDRESS": return raw[15];
-          case "FIX_Country": return "VN";
-          case "CODE_CITY": return raw[22];
-          case "CODE_PHUONG": return raw[21];
-          case "CODE_REGION": return raw[23];
-          case "TAX_BUYER": return raw[13];
-          case "CUST_PHONE": return raw[7];
-          case "EMAIL": return raw[16];
-          case "FIX_A": return "FALSE";
-          case "FIX_B": return "0";
-          case "FIX_CN": return "C";
-          default: 
-            return "";
-        }
-      });
-    });
-
-    const finalAOA = [
-      ["Dữ liệu này được export từ Web-App (Checker ERP Customer)"],
-      EXPORT_TEMPLATE_HEADERS,
-      ...exportRows
-    ];
-
-    const ws = window.XLSX.utils.aoa_to_sheet(finalAOA);
-    const wb = window.XLSX.utils.book_new();
-    window.XLSX.utils.book_append_sheet(wb, ws, "DMS_Customer_Template");
-    window.XLSX.writeFile(wb, `erpCustomerExpWeb_${new Date().getTime()}.xlsx`);
-  };
-
-  const errorCount = data.filter(d => d.isError).length;
 
   return (
-    <div className="flex flex-col h-screen bg-[#f8fafc] font-sans overflow-hidden text-slate-800">
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 border border-slate-200">
-            <div className={`p-5 flex flex-col items-center gap-4 text-center ${errorCount > 0 ? 'bg-red-50' : 'bg-emerald-50'}`}>
-               <div className={`p-4 rounded-full ${errorCount > 0 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                 {errorCount > 0 ? <AlertTriangle size={32} /> : <Download size={32} />}
-               </div>
-               <div>
-                  <h3 className={`text-lg font-black uppercase ${errorCount > 0 ? 'text-red-700' : 'text-emerald-700'}`}>Xác nhận xuất dữ liệu</h3>
-                  <p className="text-[10px] text-slate-500 font-bold mt-1">Hệ thống sẽ tạo file Excel theo template ERP</p>
-               </div>
+    <div className="min-h-screen bg-white text-slate-800 selection:bg-pink-100 selection:text-pink-600 font-sans">
+      
+      {}
+      <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-lg border-b border-pink-100">
+        <div className="container mx-auto px-4 h-20 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">H</div>
+            <span className="font-serif font-bold text-2xl tracking-tighter text-slate-900">HECTOR</span>
+          </div>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-10 font-semibold text-xs uppercase tracking-widest text-slate-500">
+            <a href="#formula" className="hover:text-pink-600 transition-colors">Công thức</a>
+            <a href="#benefits" className="hover:text-pink-600 transition-colors">Lợi ích</a>
+            <a href="#feedback" className="hover:text-pink-600 transition-colors">Khách hàng</a>
+            <a href="#order" className="bg-slate-900 text-white px-8 py-3 rounded-full hover:bg-pink-600 transition-all shadow-md">Mua Ngay</a>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+
+        {/* Mobile Sidebar */}
+        {isMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-pink-100 p-6 flex flex-col gap-4 animate-in slide-in-from-top duration-300">
+            <a href="#formula" onClick={() => setIsMenuOpen(false)} className="font-bold py-2">CÔNG THỨC</a>
+            <a href="#benefits" onClick={() => setIsMenuOpen(false)} className="font-bold py-2">LỢI ÍCH</a>
+            <a href="#feedback" onClick={() => setIsMenuOpen(false)} className="font-bold py-2">KHÁCH HÀNG</a>
+            <a href="#order" onClick={() => setIsMenuOpen(false)} className="bg-pink-600 text-white p-4 rounded-xl text-center font-bold">MUA NGAY</a>
+          </div>
+        )}
+      </nav>
+
+      {}
+      <header className="relative pt-32 pb-20 overflow-hidden bg-gradient-to-b from-[#fff5f7] to-white">
+        <div className="container mx-auto px-4 flex flex-col lg:flex-row items-center">
+          <div className="lg:w-3/5 z-10 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm mb-8 border border-pink-100">
+              <Sparkles className="w-4 h-4 text-pink-500" />
+              <span className="text-xs font-bold text-pink-600 uppercase tracking-widest italic">Công nghệ Collagen Peptides 5000mg</span>
             </div>
-            <div className="p-6">
-              {errorCount > 0 && (
-                <div className="bg-red-100/80 border border-red-200 rounded-lg p-3 mb-4 text-[11px] leading-relaxed text-red-800">
-                  <span className="font-black uppercase block mb-1 underline">Cảnh báo lỗi!</span>
-                  Dữ liệu chứa {errorCount} hàng chưa chuẩn. Bạn có chắc chắn muốn xuất không?
+            <h1 className="text-5xl lg:text-7xl font-serif font-bold leading-[1.1] mb-8 text-slate-900">
+              Đánh thức làn da <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-600 italic">Thanh Xuân</span>
+            </h1>
+            <p className="text-lg lg:text-xl text-slate-600 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+              Sự kết hợp hoàn hảo giữa <span className="font-bold text-pink-600 underline decoration-pink-200">Đông Trùng Hạ Thảo</span> và tinh chất Collagen thủy phân, giúp trẻ hóa tầng sâu và cân bằng nội tiết tố.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center gap-6 justify-center lg:justify-start">
+              <a href="#order" className="group bg-slate-900 text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-pink-600 transition-all shadow-xl hover:shadow-pink-200 flex items-center gap-3">
+                NHẬN ƯU ĐÃI NGAY
+                <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+              </a>
+              <div className="flex items-center gap-4">
+                <div className="flex text-amber-400">
+                  {[...Array(5)].map((_, i) => <Star key={i} fill="currentColor" size={18} />)}
                 </div>
-              )}
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <button onClick={() => setShowConfirmModal(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black uppercase transition-colors">Hủy</button>
-                <button onClick={executeExport} className={`px-4 py-2 text-white rounded-lg text-[10px] font-black uppercase ${errorCount > 0 ? 'bg-red-600 hover:bg-red-700' : 'bg-[#057a10] hover:bg-emerald-700'}`}>Đồng ý</button>
+                <span className="font-bold text-sm text-slate-500">12.5k+ Người tin dùng</span>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      <header className="h-11 bg-[#057a10] text-white px-4 flex items-center justify-between shrink-0 shadow-md z-50">
-        <div className="flex items-center gap-2.5">
-          <FileCheck size={18} />
-          <h1 className="text-[12px] font-black uppercase tracking-tight">Checker [ERP Customer]</h1>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-black/10 text-[9px] font-bold">
-            <div className={`w-1.5 h-1.5 rounded-full ${dbStatus === 'online' ? 'bg-emerald-400' : 'bg-red-500'}`}></div>
-            <span>{dbStatus === 'online' ? 'DB Active' : 'Connecting...'}</span>
-            <RefreshCw size={10} className="cursor-pointer" onClick={fetchMasterData}/>
+          <div className="lg:w-2/5 mt-16 lg:mt-0 relative">
+             {/* Decorative Background */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-pink-200/40 rounded-full blur-3xl -z-10"></div>
+            <img 
+              src="https://hectorstore.com.vn/wp-content/uploads/2024/09/hector-collagen-dong-trung-ha-thao.png" 
+              alt="Hector Collagen Bottle" 
+              className="w-full h-auto drop-shadow-[0_35px_35px_rgba(219,39,119,0.2)] animate-bounce-slow"
+              style={{ animationDuration: '6s' }}
+            />
           </div>
-          <input type="file" id="xlUp" className="hidden" onChange={handleFileUpload} accept=".xlsx, .xls" />
-          <label htmlFor="xlUp" className="cursor-pointer px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-[9px] font-black uppercase border border-white/20">Nạp Excel</label>
-          <button onClick={() => setShowConfirmModal(true)} disabled={data.length === 0} className="px-3 py-1.5 bg-white text-[#057a10] rounded text-[9px] font-black uppercase disabled:opacity-30">Xuất File</button>
-          <a href="https://checkmst.vercel.app/" target="_blank" className="text-white hover:underline text-[9px] font-bold uppercase flex items-center gap-1">Kiểm MST <ExternalLink size={10}/></a>
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden p-2">
-        {data.length > 0 ? (
-          <div className="bg-white rounded-lg border border-slate-300 shadow-sm h-full flex flex-col overflow-hidden">
-            <div className="px-3 py-2 bg-slate-50 border-b border-slate-300 flex items-center justify-between text-[10px] font-bold uppercase text-slate-500 shrink-0">
-               <div>File: {fileName}</div>
-               <div className="flex gap-4">
-                 <span>Tổng: {data.length}</span>
-                 <span className={errorCount > 0 ? "text-red-600" : "text-emerald-600"}>{errorCount} Lỗi</span>
-               </div>
+      {}
+      <section className="bg-slate-900 py-12 relative overflow-hidden">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-pink-600 rounded-2xl flex items-center justify-center text-white animate-pulse">
+              <Zap fill="currentColor" />
             </div>
+            <div>
+              <h2 className="text-white text-2xl font-bold uppercase tracking-wider">Flash Sale Đặc Biệt</h2>
+              <p className="text-slate-400">Giảm giá <span className="text-pink-500 font-bold">30%</span> áp dụng cho 50 khách hàng đầu tiên</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-4">
+            {[
+              { label: 'Giờ', value: timeLeft.h },
+              { label: 'Phút', value: timeLeft.m },
+              { label: 'Giây', value: timeLeft.s, highlight: true }
+            ].map((unit, i) => (
+              <div key={i} className="text-center">
+                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl font-bold border transition-all ${unit.highlight ? 'bg-pink-600 border-pink-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-100'}`}>
+                  {String(unit.value).padStart(2, '0')}
+                </div>
+                <span className="text-[10px] uppercase font-bold text-slate-500 mt-2 block tracking-widest">{unit.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            <div className="flex-1 overflow-auto">
-              <table className="w-full border-separate border-spacing-0 text-[10.5px]">
-                <thead>
-                  <tr className="bg-slate-800 text-slate-300 sticky top-0 z-40">
-                    <th className="w-10 px-1 py-1.5 text-center border-b border-r border-slate-600 font-bold uppercase sticky left-0 z-50 bg-slate-900">#</th>
-                    {COLUMN_NAMES.map((h, i) => (
-                      <th key={i} className="px-2 py-1.5 text-left border-b border-r border-slate-600 font-bold uppercase whitespace-nowrap min-w-[100px]">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-300">
-                  {data.map((row, idx) => (
-                    <tr key={idx} className={`
-                      ${row.isError ? 'bg-red-100' : (idx % 2 === 1 ? 'bg-slate-100' : 'bg-white')}
-                      hover:bg-emerald-100 transition-colors h-[28px]
-                    `}>
-                      <td className="px-1 py-1 text-center font-bold border-r border-slate-300 sticky left-0 z-20 bg-indigo-100 text-indigo-700">
-                        {row.rowNumber}
-                      </td>
-                      {row.content.map((cell, cIdx) => {
-                        const isValErr = row.validateErrors.includes(cIdx);
-                        const isDbErr = row.databaseErrors.includes(cIdx);
-                        const isMap = row.mappedIndices.includes(cIdx);
-                        const isNew = row.isNewCustomer && cIdx === 1;
-                        
-                        let tdClass = `px-2 py-1 border-r border-slate-300 whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]`;
-                        
-                        if (isValErr) tdClass += " bg-red-600 text-white font-bold";
-                        else if (isDbErr) tdClass += " bg-amber-500 text-white font-bold";
-                        else if (isMap) tdClass += " bg-indigo-50 text-indigo-900 font-bold";
-                        else if (isNew) tdClass += " bg-yellow-100 font-bold text-black";
+      {}
+      <section id="formula" className="py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center mb-20">
+            <h2 className="text-pink-600 font-bold uppercase tracking-widest text-sm mb-4">Thành phần đột phá</h2>
+            <h3 className="text-4xl font-serif font-bold text-slate-900 italic">Tinh hoa hội tụ trong 1 chai 50ml</h3>
+            <div className="w-20 h-1 bg-amber-400 mx-auto mt-6"></div>
+          </div>
 
-                        return (
-                          <td key={cIdx} className={tdClass} title={cell}>
-                            {isValErr ? (cell || "TRỐNG") : isDbErr ? (cell || "KO_KHỚP") : cell}
-                          </td>
-                        );
-                      })}
-                    </tr>
+          <div className="grid md:grid-cols-4 gap-8">
+            {[
+              { 
+                icon: <Dna className="text-pink-500" />, 
+                title: "Collagen Peptides", 
+                desc: "5000mg Collagen thủy phân từ cá, hấp thụ siêu nhanh vào tế bào da.",
+                color: "bg-pink-50" 
+              },
+              { 
+                icon: <Leaf className="text-amber-600" />, 
+                title: "Đông Trùng Hạ Thảo", 
+                desc: "Ổn định nội tiết tố, tăng sức đề kháng và cải thiện giấc ngủ.",
+                color: "bg-amber-50" 
+              },
+              { 
+                icon: <Droplets className="text-blue-500" />, 
+                title: "Hyaluronic Acid", 
+                desc: "Giữ nước tầng sâu, giúp da căng mọng và mờ nếp nhăn hiệu quả.",
+                color: "bg-blue-50" 
+              },
+              { 
+                icon: <Sparkles className="text-orange-500" />, 
+                title: "Vitamin C & Trái Cây", 
+                desc: "Từ dứa và sơ ri tươi, hỗ trợ tổng hợp collagen tự nhiên.",
+                color: "bg-orange-50" 
+              }
+            ].map((item, i) => (
+              <div key={i} className={`p-8 rounded-[40px] ${item.color} border border-white/50 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group`}>
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform">
+                  {item.icon}
+                </div>
+                <h4 className="text-xl font-bold mb-4">{item.title}</h4>
+                <p className="text-slate-600 text-sm leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {}
+      <section id="order" className="py-24 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto bg-white rounded-[50px] shadow-2xl overflow-hidden flex flex-col lg:flex-row border border-slate-100">
+            {/* Left Info Column */}
+            <div className="lg:w-1/2 bg-slate-900 p-12 lg:p-20 text-white flex flex-col justify-between relative overflow-hidden">
+               {/* Decorative Gradient */}
+              <div className="absolute -top-24 -left-24 w-64 h-64 bg-pink-600/20 rounded-full blur-3xl"></div>
+              
+              <div className="relative z-10">
+                <h2 className="text-4xl lg:text-5xl font-serif font-bold mb-8 italic">Chăm sóc bản thân ngay hôm nay</h2>
+                <p className="text-slate-400 mb-12 italic leading-relaxed">
+                  "Đừng để thanh xuân trôi qua lãng phí. Một liệu trình Hector Collagen mỗi ngày là món quà ý nghĩa nhất cho làn da và sức khỏe của bạn."
+                </p>
+                <div className="space-y-6">
+                  {[
+                    "Miễn phí vận chuyển toàn quốc",
+                    "Kiểm tra hàng trước khi thanh toán",
+                    "Tư vấn 1:1 từ chuyên gia dinh dưỡng"
+                  ].map((text, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <CheckCircle className="text-pink-500 w-6 h-6" />
+                      <span className="font-semibold text-lg">{text}</span>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+
+              <div className="mt-20 pt-10 border-t border-white/10 relative z-10">
+                <p className="text-sm uppercase tracking-widest text-slate-500 mb-2">Hotline 24/7</p>
+                <p className="text-3xl font-bold flex items-center gap-3">
+                  <Phone className="text-amber-400" /> 1900 68XX
+                </p>
+              </div>
+            </div>
+
+            {/* Right Form Column */}
+            <div className="lg:w-1/2 p-12 lg:p-20">
+              {!isSubmitted ? (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <h3 className="text-3xl font-bold mb-8">Thông tin đặt hàng</h3>
+                  <div className="grid sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-2">Họ và tên</label>
+                      <input 
+                        type="text" required 
+                        placeholder="Nguyễn Văn A"
+                        className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-pink-500 transition-all font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-2">Số điện thoại</label>
+                      <input 
+                        type="tel" required 
+                        placeholder="09xx xxx xxx"
+                        className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-pink-500 transition-all font-medium"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-2">Địa chỉ nhận hàng</label>
+                    <input 
+                      type="text" required 
+                      placeholder="Số nhà, tên đường, phường/xã..."
+                      className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-pink-500 transition-all font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-2">Chọn gói liệu trình</label>
+                    <select 
+                      defaultValue="3"
+                      className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-pink-500 transition-all font-bold appearance-none"
+                    >
+                      <option value="1">Dùng thử: 1 Hộp (10 chai) - 580.000đ</option>
+                      <option value="3">Tiết kiệm: 3 Hộp (1 tháng) - 1.560.000đ</option>
+                      <option value="6">Vẻ đẹp hoàn hảo: 6 Hộp (2 tháng) - 2.800.000đ</option>
+                    </select>
+                  </div>
+                  <button 
+                    disabled={isLoading}
+                    className="w-full bg-slate-900 text-white py-6 rounded-2xl font-bold text-xl uppercase tracking-widest shadow-xl hover:bg-pink-600 transition-all flex items-center justify-center gap-3"
+                  >
+                    {isLoading ? (
+                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <>XÁC NHẬN ĐẶT HÀNG <ShoppingBag /></>
+                    )}
+                  </button>
+                  <p className="text-center text-xs text-slate-400">
+                    Đơn hàng sẽ được xác nhận qua điện thoại và gửi thông báo tới <br />
+                    <span className="font-bold text-slate-600">zydang2025@gmail.com</span>
+                  </p>
+                </form>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-500">
+                  <div className="w-24 h-24 bg-green-500 text-white rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-green-200">
+                    <CheckCircle size={48} />
+                  </div>
+                  <h3 className="text-4xl font-serif font-bold mb-4">Cảm ơn bạn!</h3>
+                  <p className="text-slate-600 mb-8 text-lg">Đơn hàng của bạn đã được ghi nhận. <br /> Chuyên viên Hector sẽ gọi điện lại sau vài phút.</p>
+                  <button onClick={() => setIsSubmitted(false)} className="text-pink-600 font-bold hover:underline italic">Tiếp tục mua sắm</button>
+                </div>
+              )}
             </div>
           </div>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center bg-white rounded-xl border-2 border-dashed border-slate-300">
-            <Database size={48} className="text-slate-200 mb-3" />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Chưa có dữ liệu. Hãy nạp file Excel.</span>
-          </div>
-        )}
-      </main>
+        </div>
+      </section>
 
-      <footer className="h-6 bg-white border-t border-slate-300 px-4 flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase shrink-0">
-        <div>© {new Date().getFullYear()} [IT-Master HTCorp]</div>
-        <a href="https://masterdb.vercel.app/" target="_blank" className="flex items-center gap-1.5 hover:text-emerald-600">
-          <div className={`w-1.5 h-1.5 rounded-full ${dbStatus === 'online' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-          <span>DB Synchronized</span>
-          <ExternalLink size={10}/>
-        </a>
+      {}
+      <footer className="bg-white border-t border-slate-100 pt-20 pb-10">
+        <div className="container mx-auto px-4 grid md:grid-cols-4 gap-12 mb-20">
+          <div className="col-span-2">
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-lg">H</div>
+              <span className="font-serif font-bold text-xl tracking-tighter">HECTOR</span>
+            </div>
+            <p className="text-slate-500 max-w-sm mb-8 leading-relaxed">
+              Sản phẩm chất lượng cao từ Lavite. Tự hào thương hiệu Việt Nam với quy trình sản xuất đạt chuẩn FDA Hoa Kỳ và ISO quốc tế.
+            </p>
+            <div className="flex gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-pink-600 hover:bg-pink-50 transition-all cursor-pointer">
+                  <Sparkles size={18} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h5 className="font-bold text-sm uppercase tracking-widest mb-8">Hỗ trợ khách hàng</h5>
+            <ul className="space-y-4 text-slate-500 text-sm">
+              <li><a href="#" className="hover:text-pink-600 transition">Hướng dẫn mua hàng</a></li>
+              <li><a href="#" className="hover:text-pink-600 transition">Chính sách vận chuyển</a></li>
+              <li><a href="#" className="hover:text-pink-600 transition">Đổi trả & Hoàn tiền</a></li>
+              <li><a href="#" className="hover:text-pink-600 transition">Hệ thống phân phối</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-bold text-sm uppercase tracking-widest mb-8">Liên hệ</h5>
+            <ul className="space-y-4 text-slate-500 text-sm">
+              <li className="flex items-center gap-3"><Mail size={16} /> zydang2025@gmail.com</li>
+              <li className="flex items-center gap-3"><Phone size={16} /> 1900 68XX</li>
+              <li className="flex items-center gap-3"><MapPin size={16} /> TP. Hồ Chí Minh, Việt Nam</li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-slate-50 pt-10 text-center">
+          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
+            Copyright © 2024 HECTOR COLLAGEN. Thiết kế bởi Gemini.
+          </p>
+        </div>
       </footer>
     </div>
   );
 };
 
-const App = () => <Checker10 />;
 export default App;
+
+// CSS needed in a real project (Tailwind handles most):
+// @keyframes bounce-slow {
+//   0%, 100% { transform: translateY(-5%); }
+//   50% { transform: translateY(0); }
+// }
+// .animate-bounce-slow { animation: bounce-slow 6s ease-in-out infinite; }
